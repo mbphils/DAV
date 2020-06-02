@@ -1,0 +1,18 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Client_Summary` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Client_Summary`(IN Date_ VARCHAR(10),IN Client_ID VARCHAR(5),Client_BR VARCHAR(3))
+BEGIN
+   select distinct A.SYSID,concat(left(A.ACC,2),'-',SUBSTRING(A.ACC,3,5),'-',A.CHD) as "Account No.",A.CID,
+   B.BRNAME as "Branch Name",cast(sum(AVBAL/100) as Decimal(11,2))as Avail_Bal,
+   Date_Converter(A.DOPEN) as "Date Opened",
+   Date_Converter(A.DOLASTTRN) as "Last Transaction" from SVACC A
+   left join(select SYSTEMID,BRNAME from SYSPARMS)B on A.SYSID = B.SYSTEMID
+   where STATUS != '99' and Date_Converter(A.DOTRN) = Date_
+   and A.CID = Client_ID and A.SYSID = Client_BR
+   group by A.CID,A.ACC,B.BRNAME,A.CHD,A.DOPEN,A.DOLASTTRN
+   order by A.CID,A.SYSID,A.ACC;
+
+   END $$
+
+DELIMITER ;

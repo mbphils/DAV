@@ -1,0 +1,35 @@
+select CID,lname,fname,mname,dob from cif
+where CID NOT IN
+(select CID from Main_ID)
+group by lname,fname,mname,dob
+
+
+
+CREATE TABLE Depo_ID
+(
+Depo_ID int NOT NULL AUTO_INCREMENT,
+`CID` VARCHAR(5) NULL DEFAULT NULL,
+`LNAME` VARCHAR(40) NULL DEFAULT NULL,
+`FNAME` VARCHAR(40) NULL DEFAULT NULL,
+`MNAME` VARCHAR(40) NULL DEFAULT NULL,
+`DOB` DOUBLE NULL DEFAULT NULL,
+PRIMARY KEY (Depo_ID)
+)
+
+=====================================================================================================================
+INDEX
+
+CIF - SYSID,CID
+    - LNAME,FNAME,MNAME,DOB
+
+LNACC - SYSID,CID
+
+PRPARMS - SYSID,APPTYPE,TYPE
+
+SVACC - SYSID,ACC,APPTYPE
+      - APPTYPE,GLCODE
+
+SYSPARMS - SYSTEMID
+
+TABLES - SYSID,TABLENO,CODE
+

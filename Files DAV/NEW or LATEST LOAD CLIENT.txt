@@ -1,0 +1,133 @@
+-- OLD LOAD CLIENT
+
+BEGIN
+DECLARE Date_Count INTEGER;
+   insert into Main_ID(CID,lname,fname,mname,dob,SYSID,SEX,ADDR1,ADDR2,CITY)
+   select CID,ifnull(UPPER(lname),''),ifnull(UPPER(fname),''),ifnull(UPPER(mname),''),dob,SYSID,SEX,ADDR1,ADDR2,CITY from cif
+   where not EXISTS (select CONCAT(LNAME,FNAME,MNAME,DOB) from Main_ID)
+   group by lname,fname,mname,dob
+   order by lname,fname,mname;
+
+	select count(DOTRN) into Date_Count from DAV_Report where DOTRN = Date_;
+
+  IF (Date_Count = 0) then
+  insert into DAV_Report(`Depo_ID`,`Depo_Type`,`Depo_Name`,`Depo_MN`,`Depo_BD`,`Add_Prov`,`Add_City`,`Add_Brgy`,`Add_St`,`Borr?`,`Co_Borr?`,`Dep_Ac_No`,`Br_NaCo`,`Dep_Type`,`Dep_Type2`,`Dep_Cur`,`Int%`,`Int_post_date`,`Int_cutoff`,`Issue Date`,`Mat_date`,`WTax%`,`Wtax_date`,`Dorm_ch_date`,`Last_trans_date`,`Avail_Bal`,`Restrict?`,`Ac_Stat`,`DOTRN`,`DOPEN`)
+
+  select DISTINCT cast(Z.Depo_ID as char) as Depo_ID,
+case when A.ALTCID is null then 'I' when A.ALTCID is not null and (A.OWNER = 6 or A.OWNER =3) then 'ITF/By' 
+when A.ALTCID is not null and A.OWNER is not null then 'J' end as Depo_Type,
+UPPER(IFNULL(CONCAT(B.LNAME ,' ',B.FNAME),'')) as Depo_Name,UPPER(IFNULL(B.MNAME,'')) as Depo_MN,
+DATE_FORMAT(date_add('1900-01-01' , interval B.DOB DAY),'%m/%d/%y') as Depo_BD,UPPER('?') as Add_Prov,
+UPPER(IFNULL(B.CITY,'')) as Add_City,UPPER(IFNULL(B.ADDR2,'')) as Add_Brgy,UPPER(IFNULL(B.ADDR1,'')) as Add_St,
+case when H.CID is not null then 'Y' else 'N' end as "Borr?",
+case when I.COMAKER1 Is not null or I.COMAKER2 Is not null or I.COMAKER3 Is not null
+or I.COMAKER4 Is not null or I.COMAKER5 Is not null or I.COMAKER6 Is not null or
+I.COMAKER7 Is not null then 'C' else 'N' end as "Co_Borr?",
+concat(concat(LEFT(A.ACC,2),'-', SUBSTRING(A.ACC,3,5)),'-', A.CHD) as Dep_Ac_No,
+UPPER(CA.BRNAME) as Br_NaCo,case when A.APPTYPE = '1' then 'SA' when A.APPTYPE = '3' then 'TD' 
+when A.APPTYPE = '2' THEN 'DD' end as Dep_Type,CASE when A.APPTYPE = '1' THEN 
+(SELECT `DESC` from `tables` WHERE RIGHT(CONCAT('000',A.GLCODE),3) = CODE AND TABLENO = '10' and A.SYSID = SYSID)
+WHEN A.APPTYPE = '2' THEN 
+(SELECT `DESC` from `tables` WHERE RIGHT(CONCAT('000',A.GLCODE),3) = CODE AND TABLENO = '20' and A.SYSID = SYSID)
+ELSE (SELECT `DESC` from `tables` WHERE RIGHT(CONCAT('000',A.GLCODE),3) = CODE AND TABLENO = '30' and A.SYSID = SYSID)
+END AS Dep_Type2,'PHP' as Dep_Cur,concat(cast(cast(A.INTRATE/100 as decimal) as char(6)),'%') as `Int%`,
+Date_Converter(A.DOINTEFF) as Int_post_date,IFNULL(case when C.CAPFREQ = 'M' then
+Date_Converter(CA.DOLASTMLY) when C.CAPFREQ = 'Q' then Date_Converter(CA.DOLASTQLY) end ,'') as Int_cutoff,
+CASE when A.APPTYPE = '3' THEN ifnull(Date_Converter(A.DOPEN),'') END as Issue_Date,
+CASE when A.APPTYPE = '3' THEN ifnull(Date_Converter(A.MATDATE),'') END as Mat_date,
+case when B.TAXCODE != 1 then '0' else concat(cast(cast('12' as decimal) as char(6)),'%')end as "WTax%",
+case when B.TAXCODE = 0 then '' else IFNULL(case when X.TRNTAXPEN = 0 then
+'' when X.TRNTAXPEN > 0 then Date_Converter(X.TRNDATE) end ,'') end as "Wtax_date",
+case when A.APPTYPE = '3' then '' else IFNULL(case when X.TRNCHG = 0 then ''
+when X.TRNCHG > 0 then Date_Converter(X.TRNDATE) end,'') end as "Dorm_ch_date",Date_Converter(A.DOLASTTRN) as "Last_trans_date",
+A.BAL/100 as "Avail_Bal",'?' as "Restrict?",ifnull(case when (A.STATUS > '00'and A.STATUS <= '90') 
+then 'A' when A.STATUS = '98' then 'D' end ,'') as Ac_Stat,Date_Converter(A.DOTRN)as DOTRN,
+Date_Converter(A.DOPEN)as DOPEN from svacc A
+LEFT JOIN cif B on A.SYSID = B.SYSID and A.CID = B.CID
+LEFT JOIN prparms AS C ON A.SYSID = C.SYSID AND A.APPTYPE = C.APPTYPE AND A.TYPE = C.TYPE
+LEFT JOIN sysparms AS CA ON C.SYSID = CA.SYSTEMID
+LEFT JOIN lnacc H ON A.SYSID = H.SYSID AND A.CID = H.CID
+LEFT JOIN (select distinct SYSID,COMAKER1,COMAKER2,COMAKER3,COMAKER4,COMAKER5,COMAKER6,COMAKER7 from lncmaker
+where COMAKER1 is not null )I on A.SYSID = I.SYSID and A.CID = I.COMAKER1 OR A.CID = I.COMAKER2 OR A.CID = I.COMAKER3
+OR A.CID = I.COMAKER4 OR A.CID = I.COMAKER5 OR A.CID = I.COMAKER6 OR A.CID = I.COMAKER7
+LEFT JOIN Main_ID Z ON B.lname = Z.lname and B.fname = Z.fname and B.mname = Z.mname  and B.dob = Z.dob
+LEFT JOIN trnm X ON A.SYSID = X.SYSID and A.ACC = X.ACC and A.CHD = X.CHD
+where A.`STATUS` != '99' and Date_Converter(A.DOTRN) = Date_ and A.BAL > 0
+order by A.CID,B.LNAME,B.FNAME,A.ACC;
+  END IF;
+
+	 select distinct A.Depo_Name as `Client Name`,A.Depo_BD as "Date of Birth",A.Br_NaCo,A.Depo_ID,
+CONCAT(ifnull(B.ADDR1,''),' ',ifnull(B.ADDR2,''),' ',ifnull(B.CITY,''))as Address,B.SEX from dav_report A
+LEFT JOIN main_id B on A.Depo_ID = B.Depo_ID
+where A.dotrn = Date_
+group by B.LNAME,B.FNAME,B.MNAME,b.DOB
+order by A.Depo_Name limit 50;
+
+   END
+
+==================================================================================================================================================================================================
+
+-- NEW LOAD CLIENT
+
+BEGIN
+DECLARE Date_Count INTEGER;
+   insert into Main_ID(CID,lname,fname,mname,dob,SYSID,SEX,ADDR1,ADDR2,CITY)
+   select CID,ifnull(UPPER(lname),''),ifnull(UPPER(fname),''),ifnull(UPPER(mname),''),dob,SYSID,SEX,ADDR1,ADDR2,CITY from cif
+   where not EXISTS (select CONCAT(LNAME,FNAME,MNAME,DOB) from Main_ID)
+   group by lname,fname,mname,dob
+   order by lname,fname,mname;
+
+	select count(DOTRN) into Date_Count from DAV_Report where DOTRN = Date_;
+
+  IF (Date_Count = 0) then
+  insert into DAV_Report(`Depo_ID`,`Depo_Type`,`Depo_Name`,`Depo_MN`,`Depo_BD`,`Add_Prov`,`Add_City`,`Add_Brgy`,`Add_St`,`Borr?`,`Co_Borr?`,`Dep_Ac_No`,`Br_NaCo`,`Dep_Type`,`Dep_Type2`,`Dep_Cur`,`Int%`,`Int_post_date`,`Int_cutoff`,`Issue Date`,`Mat_date`,`WTax%`,`Wtax_date`,`Dorm_ch_date`,`Last_trans_date`,`Avail_Bal`,`Restrict?`,`Ac_Stat`,`DOTRN`,`DOPEN`)
+
+  select DISTINCT cast(Z.Depo_ID as char) as Depo_ID,
+case when A.ALTCID is null then 'I' when A.ALTCID is not null and (A.OWNER = 6 or A.OWNER =3) then 'ITF/By' 
+when A.ALTCID is not null and A.OWNER is not null then 'J' end as Depo_Type,
+UPPER(IFNULL(CONCAT(B.LNAME ,' ',B.FNAME),'')) as Depo_Name,UPPER(IFNULL(B.MNAME,'')) as Depo_MN,
+DATE_FORMAT(date_add('1900-01-01' , interval B.DOB DAY),'%m/%d/%y') as Depo_BD,UPPER('?') as Add_Prov,
+UPPER(IFNULL(B.CITY,'')) as Add_City,UPPER(IFNULL(B.ADDR2,'')) as Add_Brgy,UPPER(IFNULL(B.ADDR1,'')) as Add_St,
+case when H.CID is not null then 'Y' else 'N' end as "Borr?",
+case when I.COMAKER1 Is not null or I.COMAKER2 Is not null or I.COMAKER3 Is not null
+or I.COMAKER4 Is not null or I.COMAKER5 Is not null or I.COMAKER6 Is not null or
+I.COMAKER7 Is not null then 'C' else 'N' end as "Co_Borr?",
+concat(LEFT(A.ACC,2),'-',SUBSTRING(A.ACC,3,5),'-', A.CHD) as Dep_Ac_No,
+UPPER(CA.BRNAME) as Br_NaCo,case when A.APPTYPE = '1' then 'SA' when A.APPTYPE = '3' then 'TD' 
+when A.APPTYPE = '2' THEN 'DD' end as Dep_Type,CASE when A.APPTYPE = '1' THEN 
+(SELECT `DESC` from `tables` WHERE RIGHT(CONCAT('000',A.GLCODE),3) = CODE AND TABLENO = '10' and A.SYSID = SYSID)
+WHEN A.APPTYPE = '2' THEN 
+(SELECT `DESC` from `tables` WHERE RIGHT(CONCAT('000',A.GLCODE),3) = CODE AND TABLENO = '20' and A.SYSID = SYSID)
+ELSE (SELECT `DESC` from `tables` WHERE RIGHT(CONCAT('000',A.GLCODE),3) = CODE AND TABLENO = '30' and A.SYSID = SYSID)
+END AS Dep_Type2,'PHP' as Dep_Cur,concat(cast(cast(A.INTRATE/100 as decimal) as char(6)),'%') as `Int%`,
+Date_Converter(A.DOINTEFF) as Int_post_date,Date_Converter(A.DOINTEFF)as Int_cutoff,
+CASE when A.APPTYPE = '3' THEN ifnull(Date_Converter(A.DOPEN),'') END as Issue_Date,
+CASE when A.APPTYPE = '3' THEN ifnull(Date_Converter(A.MATDATE),'') END as Mat_date,
+case when B.TAXCODE != 1 then '0' else concat(cast(cast('12' as decimal) as char(6)),'%')end as "WTax%",
+case when B.TAXCODE = 0 then '' else Date_Converter(A.DOINTEFF) end as "Wtax_date",
+case when A.APPTYPE = '3' then '' else IFNULL(case when X.TRNCHG = 0 then ''
+when X.TRNCHG > 0 then Date_Converter(X.TRNDATE) end,'') end as "Dorm_ch_date",Date_Converter(A.DOLASTTRN) as "Last_trans_date",
+A.BAL/100 as "Avail_Bal",'?' as "Restrict?",ifnull(case when (A.STATUS > '00'and A.STATUS <= '90') 
+then 'A' when A.STATUS = '98' then 'D' end ,'') as Ac_Stat,Date_Converter(A.DOTRN)as DOTRN,
+Date_Converter(A.DOPEN)as DOPEN from svacc A
+LEFT JOIN cif B on A.SYSID = B.SYSID and A.CID = B.CID
+LEFT JOIN prparms AS C ON A.SYSID = C.SYSID AND A.APPTYPE = C.APPTYPE AND A.TYPE = C.TYPE
+LEFT JOIN sysparms AS CA ON C.SYSID = CA.SYSTEMID
+LEFT JOIN lnacc H ON A.SYSID = H.SYSID AND A.CID = H.CID
+LEFT JOIN (select distinct SYSID,COMAKER1,COMAKER2,COMAKER3,COMAKER4,COMAKER5,COMAKER6,COMAKER7 from lncmaker
+where COMAKER1 is not null )I on A.SYSID = I.SYSID and A.CID = I.COMAKER1 OR A.CID = I.COMAKER2 OR A.CID = I.COMAKER3
+OR A.CID = I.COMAKER4 OR A.CID = I.COMAKER5 OR A.CID = I.COMAKER6 OR A.CID = I.COMAKER7
+LEFT JOIN Main_ID Z ON B.lname = Z.lname and B.fname = Z.fname and B.mname = Z.mname  and B.dob = Z.dob
+LEFT JOIN trnm X ON A.SYSID = X.SYSID and A.ACC = X.ACC and A.CHD = X.CHD
+where A.`STATUS` != '99' and Date_Converter(A.DOTRN) = Date_ and A.BAL > 0
+order by A.CID,B.LNAME,B.FNAME,A.ACC;
+  END IF;
+
+	 select distinct A.Depo_Name as `Client Name`,A.Depo_BD as "Date of Birth",A.Br_NaCo,A.Depo_ID,
+CONCAT(ifnull(B.ADDR1,''),' ',ifnull(B.ADDR2,''),' ',ifnull(B.CITY,''))as Address,B.SEX from dav_report A
+LEFT JOIN main_id B on A.Depo_ID = B.Depo_ID
+where A.dotrn = Date_
+group by B.LNAME,B.FNAME,B.MNAME,b.DOB
+order by A.Depo_Name limit 50;
+
+   END

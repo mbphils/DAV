@@ -1,0 +1,40 @@
+
+==Depo_Type
+select * from SVCORP - corporate account = still not in DAV Rep
+svacc altcid for joint account
+owner = 6 - ITF
+owner = 3 - by
+==End Depo_Type
+
+==Add_Prov==
+still not in dav rep due to address in cif
+==End Add_Prov==
+
+==Co_Borr?==
+"G" if the depositor's deposit account serves as guarantee for 
+an existing loan of another person or entity = still not in dav rep
+==End Co_Borr?==
+
+==Dep_Type==
+"NOW" for Negotiable Order of Withdrawal; = still not in dav rep
+"NCTD" for Negotiable Certificate of Time Deposit = still not in dav rep
+==End Dep_Type==
+
+==Wtax_date==
+Wtax_date - check DOLASTTRN SVACC get YYMM,check trnmYYMM look for 
+trntaxpen if null nodate else get trndate = still not in dav rep
+==End Wtax_date==
+
+==Dorm_ch_date==
+Dorm_ch_date  - check DOLASTMLY SYSPARMS get YYMM,check trnmYYMM look
+trnchg if null nodate else get trndate = still not in dav Rep
+==End Dorm_ch_date==
+
+==Restrict?==
+"Y" if restricted (eg. freeze account, under investigation, 
+with pending legal case);  "N" otherwise = still not in dav rep
+==End Restrict?==
+
+==Ac_Stat==
+"ES" for Escheat (due to the Treasurer of the Philippines) = still not in dav rep
+==End Ac_Stat==

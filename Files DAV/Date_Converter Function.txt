@@ -1,0 +1,12 @@
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS `Date_Converter` $$
+CREATE DEFINER=`root`@`localhost` FUNCTION `Date_Converter`(Date_to_Convert int) RETURNS varchar(10) CHARSET latin1
+    DETERMINISTIC
+BEGIN
+    DECLARE Converted_Date varchar(10);
+    set Converted_Date = DATE_FORMAT(date_add('1900-01-01' , interval Date_to_Convert DAY),'%m/%d/%Y');
+    RETURN (Converted_Date);
+END $$
+
+DELIMITER ;

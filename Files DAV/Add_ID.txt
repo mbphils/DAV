@@ -1,0 +1,14 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Add_ID` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Add_ID`()
+BEGIN
+  insert into Depo_ID(lname,fname,mname,dob)
+  select lname,fname,mname,dob from cif
+  where not EXISTS(select concat(lname,fname,mname,dob)from Depo_ID)
+  group by lname,fname,mname,dob
+  order by lname,fname,mname;
+
+   END $$
+
+DELIMITER ;

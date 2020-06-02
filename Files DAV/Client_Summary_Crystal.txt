@@ -1,0 +1,40 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Client_Summary_Crystal` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Client_Summary_Crystal`(IN Date_ VARCHAR(10))
+BEGIN
+   select distinct concat(Z.Depo_ID,' - ',concat(C.Lname,' ',C.Fname,' ',C.Mname)) as CID,
+   concat(A.SYSID,' - ',B.BRNAME)as "Branch Name",
+   concat(left(A.ACC,2),'-',SUBSTRING(A.ACC,3,5),'-',A.CHD) as "Account No.",
+   cast(sum(AVBAL/100) as Decimal(11,2))as Avail_Bal,
+   Date_Converter(A.DOPEN) as "Date Opened",
+   Date_Converter(A.DOLASTTRN) as "Last Transaction" from SVACC A
+   left join(select SYSTEMID,BRNAME from SYSPARMS)B on A.SYSID = B.SYSTEMID
+   LEFT JOIN cif C ON A.CID = C.CID AND A.SYSID = C.SYSID
+ 	LEFT JOIN Main_ID Z ON C.lname = Z.lname and C.fname = Z.fname and C.mname = Z.mname and C.dob = Z.dob
+   where STATUS != '99' and Date_Converter(A.DOTRN) = Date_
+   group by A.CID,A.ACC,B.BRNAME,A.CHD,A.DOPEN,A.DOLASTTRN,Z.Depo_ID
+   order by Z.Depo_ID,A.CID,A.SYSID,A.ACC;
+
+   END $$
+
+DELIMITER ;
+
+========================================================================================================================================
+NEW
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Client_Summary_Crystal` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Client_Summary_Crystal`(IN Date_ VARCHAR(10))
+BEGIN
+   select distinct concat(A.Depo_ID,' - ',A.Depo_Name,' ',A.Depo_MN) as CID,
+   concat(A.Br_NaCo,' - ',B.BRNAME)as "Branch Name",A.Dep_Ac_No as "Account No.",
+   A.Avail_Bal,A.DOPEN as "Date Opened",A.Last_trans_date as "Last Transaction" from dav_report A
+   LEFT JOIN sysparms B on A.br_NaCo = B.systemid
+   where A.DOTRN = Date_
+   order by A.Depo_Name;
+
+   END $$
+
+DELIMITER ;

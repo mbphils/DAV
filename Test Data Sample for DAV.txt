@@ -1,0 +1,14 @@
+Please create the following customers in the test MBv8:
+
+Catacataca,  Keva -  7/21/1943 - CID 00062
+Supnet, Linnea -   12/21/1944  - CID 00063
+Lota, Herma -  11/8/1950       - CID 00064
+Bolisay, Kayla  -  9/19/1975   - CID 00065
+Ampang, Gricelda  -4/10/1952   - CID 00066
+Puyot, Nilda - 8/10/1964       - CID 00067
+Malix, Heidi - 2/13/1959       - CID 00068
+Bulayo, Felix 6/3/1966         - CID 00069
+Moulic, Tessa  - 5/29/1979     - CID 00070
+Tagasa, Margareta - 7/25/1966  - CID 00071
+
+Also create one Savings, Current Accounts, Time Deposit and Loans for each name. 

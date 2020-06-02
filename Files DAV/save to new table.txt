@@ -1,0 +1,54 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Add_DOTRN` $$
+CREATE PROCEDURE `Add_DOTRN`(IN Date_ VARCHAR(10))
+BEGIN
+  DECLARE Date_Count INTEGER;
+  select count(DOTRN) into Date_Count from DAV_Report where DOTRN = Date_;
+
+  IF (Date_Count = 0) then
+  insert into DAV_Report(`Depo_ID`,`Depo_Type`,`Depo_Name`,`Depo_MN`,`Depo_BD`,`Add_Prov`,`Add_City`,`Add_Brgy`,`Add_St`,`Borr?`,`Co_Borr?`,`Dep_Ac_No`,`Br_NaCo`,`Dep_Type`,`Dep_Type2`,`Dep_Cur`,`Int%`,`Int_post_date`,`Int_cutoff`,`Issue Date`,`Mat_date`,`WTax%`,`Wtax_date`,`Dorm_ch_date`,`Last_trans_date`,`Avail_Bal`,`Restrict?`,`Ac_Stat`,`DOTRN`)
+
+  SELECT distinct
+  cast(Z.Depo_ID as char) as Depo_ID,case when A.ALTCID is null then 'I' else
+  case when A.ALTCID is not null and (A.OWNER = 6 or A.OWNER =3) then 'ITF/By' else
+  case when A.ALTCID is not null and A.OWNER is not null then 'J' end end end as Depo_Type,
+  IFNULL(CONCAT(B.LNAME ,' ',B.FNAME),'') as Depo_Name,IFNULL(B.MNAME,'') as Depo_MN,
+  Date_Converter(B.DOB) as Depo_BD,'?' as Add_Prov,
+  IFNULL(B.CITY,'') as Add_City,IFNULL(B.ADDR2,'') as Add_Brgy,IFNULL(B.ADDR1,'') as Add_St,
+  case when H.CID is not null then 'Y' else 'N' end as "Borr?",
+  case when I.CID Is not null then 'C' else 'N' end as "Co_Borr?",
+  concat(concat(LEFT(A.ACC,2),'-', SUBSTRING(A.ACC,3,5)),'-', A.CHD) as Dep_Ac_No,
+  A.SYSID as Br_NaCo,case when A.APPTYPE = '1' then 'SA' else case when A.APPTYPE = '3' then 'TD' else
+  case when A.APPTYPE = '2' then 'DD' end end end as Dep_Type,
+  case when A.APPTYPE = '1' then E.DESC else
+  case when A.APPTYPE = '2' then F.DESC else case when A.APPTYPE = '3' then G.DESC end end end  as Dep_Type2,
+  'PHP' as Dep_Cur,concat(cast(cast(A.INTRATE/100 as decimal) as char(6)),'%') as `Int%`,
+  Date_Converter(A.DOINTEFF) as Int_post_date,IFNULL(case when C.CAPFREQ = 'M' then
+  Date_Converter(CA.DOLASTMLY) when C.CAPFREQ = 'Q' then Date_Converter(CA.DOLASTQLY) end ,'') as Int_cutoff,
+  ifnull(Date_Converter(D.DOPEN),'')as Issue_Date,ifnull(Date_Converter(D.MATDATE),'') as Mat_date,
+  case when A.TAXCODE != 1 then '0' else
+  concat(cast(cast('12' as decimal) as char(6)),'%')end as "WTax%",'?' as "Wtax_date",'?' as "Dorm_ch_date",
+  Date_Converter(A.DOLASTTRN) as "Last_trans_date",A.AVBAL/100 as "Avail_Bal",'?' as "Restrict?",
+  ifnull(case when (A.STATUS > '00'and A.STATUS < '90') then 'A' when A.STATUS = '98' then 'D' end ,'') as Ac_Stat,Date_Converter(A.DOTRN)as DOTRN
+  FROM svacc A
+  LEFT JOIN cif B ON A.CID = B.CID AND A.SYSID = B.SYSID
+  LEFT JOIN Depo_ID Z ON B.lname = Z.lname and B.fname = Z.fname and B.mname = Z.mname  and B.dob = Z.dob
+  LEFT JOIN prparms AS C ON A.SYSID = C.SYSID AND A.APPTYPE = C.APPTYPE AND A.TYPE = C.TYPE
+  LEFT JOIN sysparms AS CA ON C.SYSID = CA.SYSTEMID
+  LEFT JOIN svacc AS D on A.SYSID = D.SYSID and A.ACC = D.ACC and D.APPTYPE = '3'
+  LEFT JOIN `tables` AS E ON A.SYSID = E.SYSID AND RIGHT(concat('000', A.GLCODE),3)= E.`CODE` AND E.TABLENO = '10'
+  LEFT JOIN `tables` AS F ON A.SYSID = F.SYSID AND RIGHT(concat('000', A.GLCODE),3)= F.`CODE` AND F.TABLENO = '20'
+  LEFT JOIN `tables` AS G ON A.SYSID = G.SYSID AND RIGHT(concat('000', A.GLCODE),3)= G.`CODE` AND G.TABLENO = '30'
+  LEFT JOIN lnacc H ON A.SYSID = H.SYSID AND A.CID = H.CID
+  LEFT JOIN cif AS I ON A.SYSID = I.SYSID and A.CID = I.CID
+  where A.`STATUS` != '99' and Date_Converter(A.DOTRN) = Date_
+  order by A.CID,B.LNAME,B.FNAME,A.ACC;
+
+  select * from DAV_Report;
+
+ END IF;
+
+   END $$
+
+DELIMITER ;

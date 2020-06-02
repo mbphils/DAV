@@ -1,0 +1,35 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Date_Summary` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Date_Summary`(IN Date_ VARCHAR(10))
+BEGIN
+   select A.SYSID,B.BRNAME as "Branch Name",
+   count(ACC)as "No. of Accts",
+   sum(AVBAL)as Avail_Bal from SVACC A
+   left join(select SYSTEMID,BRNAME,DOTRN
+   from SYSPARMS)B on A.SYSID = B.SYSTEMID
+   where STATUS != '99' and Date_Converter(a.DOTRN) = Date_
+   group by SYSID,B.BRNAME order by SYSID;
+   END $$
+
+DELIMITER ;
+
+==========================================================================================================================
+
+NEW Date_Summary
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Date_Summary` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Date_Summary`(IN Date_ VARCHAR(10))
+BEGIN
+   select A.Br_NaCo,B.BRNAME as "Branch Name",
+   count(A.Dep_Ac_No)as "No. of Accts",
+   sum(a.Avail_Bal/100)as Avail_Bal from dav_Report A
+   LEFT JOIN(select SYSTEMID,BRNAME,DOTRN
+   from SYSPARMS)B on A.Br_NaCo = B.SYSTEMID
+   where A.DOTRN = Date_
+   group by A.Br_NaCo,B.BRNAME order by A.Br_NaCo;
+   END $$
+
+DELIMITER ;

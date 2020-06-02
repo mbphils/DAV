@@ -1,0 +1,24 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `Client_Search` $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Client_Search`(IN Date_ VARCHAR(10),IN Client_ VARCHAR(100))
+BEGIN
+  select distinct A.SYSID,A.CID,case when B.Sex is not null then
+  concat(substring(UPPER(B.Lname),1,1),substring(LOWER(B.Lname),2,50),', ',
+  substring(UPPER(B.Fname),1,1),substring(LOWER(B.Fname),2,50),' ',
+  substring(UPPER(B.Mname),1,1),substring(LOWER(B.Mname),2,50)) else
+  (concat(trim(LNAME),  ', ', trim(FNAME) , ' ', TRIM(MNAME)))
+  End as "Client Name",ifnull(date_Converter(B.DOB),'') as "Date of Birth",
+  case when ADDR1 > '' and ADDR2 > '' and CITY > '' then
+  (concat(trim(ADDR1) , ' ' , trim(ADDR2) , ' '  , trim(CITY)))
+  when ADDR1 > '' and ADDR2 > '' then (concat(trim(ADDR1) , ' ', trim(ADDR2)))
+  else ADDR1 End as Address,DOSRI,B.DOB,B.Sex, trim(B.LNAME) as LastName from svacc A
+  left join cif B on A.SYSID = B.SYSID
+  and A.CID = B.CID where A.`STATUS` != '99'
+  and Date_Converter(A.dotrn) = Date_
+  and concat(B.lname,B.Fname,B.Mname) like concat('%',Client_,'%')
+  order by B.Lname limit 50;
+
+   END $$
+
+DELIMITER ;
